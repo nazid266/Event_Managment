@@ -1,0 +1,39 @@
+ {% extends "base.html" %}
+ {% block content %}
+ <div class="border border-slate-200 w-2/5 mx-auto bg-blue-50 rounded-xl mt-5 mb-5 hover:scale-105 transition-transform">
+     <h1 class="px-60 mt-5 font-semibold flex justify-normal">SingUp<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+  <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
+</svg>
+</h1>
+     <div class="mx-auto w-1/2 my-9 rounded-md ">
+        {% if form.non_field_errors %}
+        {% for error in form.non_field_errors %}
+            {{error}}       
+        {% endfor %}
+        {% endif %}
+        <form method="POST">
+
+            {% csrf_token %}
+            {% for field in form %}
+            <p>
+                <label for="{{field.id_for_label}}">{{field.label}}</label>
+                {{field}}
+                {% if field.errors %}
+                <ul>
+                    {% for error in field.errors %}
+                    <li>{{error}}</li>
+                    {% endfor %}
+                </ul>
+                {% endif %}
+            </p>
+            {% endfor %}
+            <button class="bg-blue-500 px-2 py-1 rounded text-white hover:bg-gray-50 hover:text-blue-600 mt-3 " type="submit">Sing Up</button>
+        </form>
+        
+    </div>
+
+     
+ </div>
+{% endblock content %}   
+
+

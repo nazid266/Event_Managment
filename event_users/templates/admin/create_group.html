@@ -1,0 +1,21 @@
+{% extends "admin/dashboard.html" %}
+{% block content %}
+  
+    <div class="p-6 max-w-[1200px] mx-auto">
+   {% if massages %}
+    {% for massage in massages  %}
+       <div class="bg-gray-300 text-white">{{massage}}</div>
+    {% endfor %}
+   {% endif %}
+    <form method="POST">
+        {% csrf_token %}
+        {{form.as_p}}
+        <button type="submit" class="bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-4 rounded transition-colors duration-200 mt-2">Create Group</button>
+    </form>
+
+   </div>
+   
+
+
+{% endblock content %}
+

@@ -1,0 +1,45 @@
+{% extends "admin/dashboard.html" %}
+{% block content %}
+
+<div class="p-6 max-w-[1200px] mx-auto">
+
+  <h2 class="text-3xl font-bold mb-6 text-center text-gray-800">Groups & Permissions</h2>
+
+  <div class="overflow-x-auto shadow-lg rounded-lg">
+    <table class="min-w-full divide-y divide-gray-200 bg-white rounded-lg">
+      <thead class="bg-blue-100">
+        <tr>
+          <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">
+            Group Name
+          </th>
+          <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700 uppercase tracking-wider">
+            Permissions
+          </th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-200">
+        {% for group in groups %}
+        <tr class="hover:bg-gray-50 transition-colors">
+          <td class="px-6 py-4 whitespace-nowrap font-medium text-gray-800">
+            {{ group.name }}
+          </td>
+          <td class="px-6 py-4 whitespace-normal">
+            {% if group.permissions.all %}
+              <ul class="list-disc list-inside space-y-1">
+                {% for permission in group.permissions.all %}
+                  <li class="text-gray-700">{{ permission.name }}</li>
+                {% endfor %}
+              </ul>
+            {% else %}
+              <span class="text-gray-400 italic">No Permission Assigned</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+</div>
+
+{% endblock content %}
