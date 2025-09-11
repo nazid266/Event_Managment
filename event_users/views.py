@@ -121,7 +121,7 @@ def admin_dashboard(request):
             
     counts=User.objects.aggregate(
         admin=Count("id",filter=Q(groups__name="Admin")),
-        organiger=Count("id",filter=Q(groups__name="Organizer")),
+        organizer=Count("id",filter=Q(groups__name="Organizer")),
         participant=Count("id",filter=Q(groups__name="Participant")),
         
     )
