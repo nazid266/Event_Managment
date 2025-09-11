@@ -90,7 +90,7 @@ WSGI_APPLICATION = 'event_management.wsgi.application'
 DATABASES = {
     'default': dj_database_url.config(
       # Replace this value with your local database's connection string.
-        default='postgresql://event_manager_m6ky_user:fZLngcF9ccWOC6cR8Ql0BKGJxQPccSLY@dpg-d0dee11r0fns73957u8g-a.oregon-postgres.render.com/event_manager_m6ky',
+        default=config("DATABASE_URL"),
        conn_max_age=600
    )}
 
@@ -145,7 +145,8 @@ MEDIA_ROOT= BASE_DIR/ 'media'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
-FRONTEND_URL = "http://127.0.0.1:8000"
+#FRONTEND_URL = "http://127.0.0.1:8000"
+FRONTEND_URL = "https://event-managment-bi6y.onrender.com"
 
 
 # Email config
