@@ -7,6 +7,9 @@ from datetime import date
 from django.db.models import Q,Count
 from django.contrib.auth.decorators import user_passes_test
 from event_users.views import is_admin
+from django.views.generic import ListView,View,CreateView,UpdateView
+from django.utils.decorators import method_decorator
+from django.views.generic.base import ContextMixin
 
 
 def is_organizer(user):
@@ -15,7 +18,7 @@ def is_organizer(user):
 def is_perticipant(user):
     return user.groups.filter(name="Participant")
 
-@user_passes_test(is_organizer,login_url="no_permission")
+'''@user_passes_test(is_organizer,login_url="no_permission")
 def main_dashboard(request):
     
     counts=Event.objects.aggregate(
@@ -58,7 +61,58 @@ def main_dashboard(request):
         'events':events
     }
 
-    return render(request,'dashboard.html',context)
+    return render(request,'dashboard.html',context)'''
+
+main_dashboard_decorator=user_passes_test(is_organizer,login_url="no_permission")
+@method_decorator(main_dashboard_decorator,name='dispatch')
+class MainDashboard(ListView):
+    model=Event
+    template_name='dashboard.html'
+    context_object_name='events'
+    
+    def get_queryset(self):
+        type=self.request.GET.get("type","all")
+        base_quary=Event.objects.select_related('category').prefetch_related("Participants")
+    
+        if type=='today_event':
+         events=base_quary.filter(date=date.today())
+        elif type=='upcoming_event':
+         events=base_quary.filter(date__gte=date.today())
+        elif type=='past_event':
+         events=base_quary.filter(date__lt=date.today())
+        elif type=='all':
+         events=base_quary.all()
+        
+        category_id=self.request.GET.get("category")
+        if category_id:
+          events=base_quary.filter(category_id=category_id)
+    
+        search_item=self.request.GET.get("search")
+    
+        if search_item:
+         events=Event.objects.filter(Q(name__icontains=search_item)|Q(location__icontains=search_item))
+         
+        return events
+         
+        
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        counts=Event.objects.aggregate(
+        total_event=Count('id'),
+        today_event=Count('id',filter=Q(date= date.today())),
+        upcoming_event=Count('id',filter=Q(date__gte=date.today())),
+        past_event=Count('id',filter=Q(date__lt=date.today()))
+        )
+        context["counts"]=counts
+        context["all_category"] = Category.objects.all()
+        context["participant"] = Event.objects.aggregate(total=Count('Participants', distinct=True))['total']
+
+    
+
+
+
+
 
 def detail(request,id):
     
@@ -68,7 +122,7 @@ def detail(request,id):
     context={'event':event,'event_participant':event_participant}
     return render(request,'detail.html',context)
 
-@user_passes_test(is_organizer,login_url="no_permission")
+'''@user_passes_test(is_organizer,login_url="no_permission")
 def creat_event(request):
     event_form=EventModelForm()
     
@@ -82,7 +136,35 @@ def creat_event(request):
         else:
             print(event_form.errors)
     context={"event_form":event_form}
-    return render(request,'event_form.html',context)
+    return render(request,'event_form.html',context)'''
+
+create_event_decorator=user_passes_test(is_organizer,login_url="no_permission")
+@method_decorator(create_event_decorator,name='dispatch')
+class CreateEvent(CreateView):
+    form_class=EventModelForm
+    template_name='event_form.html'
+    context_object_name='event_form'
+    
+    def get_context_data(self, **kwargs):
+       context=super().get_context_data(**kwargs)
+       context['event_form']=kwargs.get('event_form',EventModelForm())
+       return context
+   
+    def post(self,request,*args,**kwargs):
+        if request.method=="POST":
+         event_form=EventModelForm(request.POST,request.FILES)
+        
+        if event_form.is_valid():
+            event_form.save()
+            messages.success(request,"Event Creat Successfully")
+            return redirect("create_event")
+        else:
+            print(event_form.errors)
+        context=self.get_context_data(event_form=event_form)
+        return render(request,self.template_name,context)
+    
+        
+       
 
 @user_passes_test(is_organizer,login_url="no_permission")
 def event_category(request):
@@ -119,7 +201,7 @@ def update_category(request,id):
     return render(request,'category.html',context)
 
 
-@user_passes_test(is_perticipant,login_url="no_permission")
+'''@user_passes_test(is_perticipant,login_url="no_permission")
 def rsvp_event(request,id):
     event=Event.objects.get(id=id)
     if request.user in event.Participants.all():
@@ -128,12 +210,25 @@ def rsvp_event(request,id):
         event.Participants.add(request.user)
         messages.success(request,f"You sucessfully rsvped  {event.name}  event")
         
-    return redirect("participant_dashboard")
+    return redirect("participant_dashboard")'''
+    
+rsvp_decorator=user_passes_test(is_perticipant,login_url="no_permission")
+@method_decorator(rsvp_decorator,name='dispatch')
+class RsvpEvent(ContextMixin,View):
+    def get(self,request,*args,**kwargs):
+        event=Event.objects.get(id=kwargs.get('id'))
+        if request.user in event.Participants.all():
+          messages.success(self.request,f"You have been rsvping  {event.name} event")
+        else:
+         event.Participants.add(request.user)
+         messages.success(request,f"You sucessfully rsvped  {event.name}  event")
+        
+        return redirect("participant_dashboard")
 
     
 
     
-@user_passes_test(is_perticipant,login_url="no_permission")    
+'''@user_passes_test(is_perticipant,login_url="no_permission")    
 def participant_dashboard(request):
     counts=Event.objects.aggregate(
         today_event=Count('id',filter=Q(date=date.today())),
@@ -165,9 +260,49 @@ def participant_dashboard(request):
         events=base_query.filter(category_id=select_category_id)
     
     context={'counts':counts,'rsvp_event_count':rsvp_event_count,'events':events,'all_category':category}
-    return render(request,'participant_dashboard.html',context)
+    return render(request,'participant_dashboard.html',context)'''
+    
 
-
+participant_dashboard_decorator=user_passes_test(is_perticipant,login_url="no_permission") 
+@method_decorator(participant_dashboard_decorator,name='dispatch')
+class ParticipantDashboard(ListView):
+    model=Event
+    template_name='participant_dashboard.html'
+    context_object_name='events'
+    
+    def get_queryset(self):
+        type=self.request.GET.get("type","all")
+        base_query=Event.objects.select_related('category').prefetch_related("Participants")
+    
+        if type=="today_event":
+         events=base_query.filter(date=date.today())
+        elif type=="upcoming_event":
+         events=base_query.filter(date__gte=date.today())
+        elif type=="past_event":
+         events=base_query.filter(date__lt=date.today())
+        elif type=="all":
+         events=self.request.user.rsvp_events.all()
+        
+        search_item=self.request.GET.get("search")
+        if search_item:
+          events=Event.objects.filter(Q(name__icontains=search_item)|Q(location__icontains=search_item))
+        select_category_id=self.request.GET.get("category")
+        if select_category_id:
+          events=base_query.filter(category_id=select_category_id)
+        return events
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        counts=Event.objects.aggregate(
+        today_event=Count('id',filter=Q(date=date.today())),
+        upcoming_event=Count('id',filter=Q(date__gte=date.today())),
+        past_event=Count('id',filter=Q(date__lt=date.today())),
+        )
+        context["counts"]=counts
+        context["all_category"] = Category.objects.all()
+        context["rsvp_event_count"]= self.request.user.rsvp_events.count()
+        return context
+    
+    
 
 
 @user_passes_test(is_organizer,login_url="no_permission")
@@ -183,7 +318,7 @@ def event_delete(request,id):
 
 
 
-@user_passes_test(is_organizer,login_url="no_permission")
+'''@user_passes_test(is_organizer,login_url="no_permission")
 def event_update(request,id):
     event=Event.objects.get(id=id)
     event_form=EventModelForm(instance=event)
@@ -196,11 +331,30 @@ def event_update(request,id):
     
     
     context={"event_form":event_form}
-    return render(request,"event_form.html",context)
+    return render(request,"event_form.html",context)'''
 
+event_update_decorator=user_passes_test(is_organizer,login_url="no_permission")
+@method_decorator(event_update_decorator,name='dispatch')
+class EventUpdate(UpdateView):
+    model=Event
+    form_class=EventModelForm
+    template_name='event_form.html'
+    pk_url_kwarg='id'
+    
+    def get_context_data(self, **kwargs):
+       context=super().get_context_data(**kwargs)
+       context['event_form']=self.get_form()
+       return context
+    def post(self,request,*args,**kwargs):
+        self.object=self.get_object()
+        event_form=EventModelForm(request.POST,request.FILES,instance=self.object)
+        if event_form.is_valid():
+            event_form.save()
+            messages.success(request,"Event Update succesfully")
+            return redirect('update_event',self.object.id)
+        
 
-
-def dashboar(request):
+def dashboard(request):
     if is_admin(request.user):
         return redirect("admin_dashboard")
     elif is_organizer(request.user):
@@ -211,6 +365,9 @@ def dashboar(request):
     return redirect("no_permission")
 
 
+
+
+       
 
     
     

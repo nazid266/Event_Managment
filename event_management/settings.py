@@ -7,6 +7,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = config("SECRET_KEY")
 DEBUG = True
 
+AUTH_USER_MODEL= 'event_users.CustomUser'
+
+
 ALLOWED_HOSTS = ['*']
 CSRF_TRUSTED_ORIGINS = ['https://*.onrender.com','https://127.0.0.1:8000']
 
@@ -19,7 +22,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'events',
     'event_users',
-    'core'
+    'core',
+    'phonenumber_field'
 ]
 
 MIDDLEWARE = [
@@ -59,6 +63,20 @@ DATABASES = {
     )
 }
 DATABASES['default']['OPTIONS'] = {'sslmode': 'require'}
+
+
+# Database - use localhost Postgre
+'''DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'event-managment',
+        'USER': 'postgres',
+        'PASSWORD': 'password',
+        'HOST': 'localhost',
+        'PORT': '5432'
+    }
+}'''
+
 
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',},

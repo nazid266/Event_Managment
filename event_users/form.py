@@ -3,6 +3,10 @@ from django.contrib.auth.models import User,Group,Permission
 import re
 from events.form import StyledFormMixin
 from django.contrib.auth.forms import AuthenticationForm
+from django.contrib.auth.forms import PasswordChangeForm,PasswordResetForm,SetPasswordForm
+from event_users.models import CustomUser
+from django.contrib.auth import get_user_model
+User=get_user_model()
 
 class RegistationForm(StyledFormMixin,forms.ModelForm):
     
@@ -65,5 +69,21 @@ class Create_group_Form(StyledFormMixin,forms.ModelForm):
         fields=["name","permissions"]
         
         
-        
+
+class CustomPasswordChange(StyledFormMixin,PasswordChangeForm):
+    pass
+       
+
+class CustomPasswordResetForm(StyledFormMixin,PasswordResetForm):
+    pass
+
+class CustomPasswordResetConformForm(StyledFormMixin,SetPasswordForm):
+    pass
+
+
+
+class EditProfileForm(StyledFormMixin,forms.ModelForm):
+    class Meta:
+        model=CustomUser
+        fields=['email','first_name','last_name','bio','phone','profile_image']
         

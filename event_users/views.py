@@ -1,11 +1,16 @@
 from django.shortcuts import render,redirect,HttpResponse
-from event_users.form import RegistationForm,loginForm,Assing_role,Create_group_Form
+from event_users.form import RegistationForm,loginForm,Assing_role,Create_group_Form,CustomPasswordChange,CustomPasswordResetForm,CustomPasswordResetConformForm,EditProfileForm
 from django.contrib import messages
 from django.contrib.auth import login,logout
 from django.contrib.auth.tokens import default_token_generator
 from django.contrib.auth.models import User,Group
 from django.db.models import Prefetch,Q,Count
 from django.contrib.auth.decorators import user_passes_test,login_required
+from django.views.generic import TemplateView,UpdateView
+from django.contrib.auth.views import PasswordChangeView,PasswordResetView,PasswordResetConfirmView
+from django.urls import reverse_lazy
+from django.contrib.auth import get_user_model
+User=get_user_model()
 
 # Create your views here.
 
@@ -134,3 +139,69 @@ def delete_perticipant(request,id):
         participant=User.objects.get(id=id)
         participant.delete()
         return redirect("admin_dashboard")
+    
+    
+class UserProfile(TemplateView):
+    template_name='accounts/profile.html'
+    
+    def get_context_data(self, **kwargs):
+       context=super().get_context_data(**kwargs)
+       user=self.request.user
+       
+       context['username']=user.username
+       context['email']=user.email
+       context['name']=user.get_full_name()
+       context['member_since']=user.date_joined
+       context['last_login']=user.last_login
+       context['Phone']=user.phone
+       context['bio']=user.bio
+       context['profile_image']=user.profile_image
+       return context
+   
+class ChangePassword(PasswordChangeView):
+    template_name='accounts/password_change.html'
+    form_class=CustomPasswordChange
+    
+    
+class PasswordResetview(PasswordResetView):
+    from_class=CustomPasswordResetForm
+    template_name='registration/reset_password.html'
+    success_url=reverse_lazy('sing_in')
+    html_email_template_name='registration/reset_email.html'
+    
+    def get_context_data(self, **kwargs):
+        context= super().get_context_data(**kwargs)
+        
+        context['protocol']='https' if self.request.is_secure() else 'http'
+        context['domain']= self.request.get_host()
+        return context
+    
+    def form_valid(self, form):
+        messages.success(self.request,"A Reset Email Sent....Pls Check Your Email...")
+        return super().form_valid(form)
+ 
+    
+class PasswordResetConfirmView(PasswordResetConfirmView):
+    from_class=CustomPasswordResetConformForm
+    template_name='registration/reset_password.html'
+    success_url=reverse_lazy('sing_in')
+    
+    def form_valid(self, form):
+        messages.success(self.request,"Password Reset Succesfully Done")
+        return super().form_valid(form)
+
+
+
+class EditProfile(UpdateView):
+    model=User
+    form_class=EditProfileForm
+    context_object_name='form'
+    template_name='accounts/update_profile.html'
+    
+    def get_object(self):
+        return self.request.user
+    
+    def form_valid(self, form):
+        form.save()
+        return redirect('profile')
+    

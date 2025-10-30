@@ -5,6 +5,8 @@ from events.models import Event
 from django.contrib.auth.tokens import default_token_generator
 from django.conf import settings
 from django.core.mail import send_mail
+from django.contrib.auth import get_user_model
+User=get_user_model()
 
 
 
@@ -12,7 +14,7 @@ from django.core.mail import send_mail
 def user_activation(sender,instance,created,**kwargs):
     if created:
         
-        participant_group=Group.objects.get(name="Participant")
+        participant_group, _=Group.objects.get_or_create(name="Participant")
         instance.groups.add(participant_group)
         
         
