@@ -31,7 +31,7 @@ def sing_up(request):
         if form.is_valid():
             user=form.save(commit=False)
             user.set_password(form.cleaned_data.get('password'))
-            user.is_active=False
+            user.is_active=True # render for free triel use else have a false
             user.save()
             messages.success(request,"Your Conformation Email Sent....Please Check This Email")
             return redirect('sing_in')
