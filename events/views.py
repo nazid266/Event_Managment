@@ -71,30 +71,29 @@ class MainDashboard(ListView):
     context_object_name='events'
     
     def get_queryset(self):
+        
+        events=Event.objects.select_related('category').prefetch_related("Participants")
         type=self.request.GET.get("type","all")
-        base_quary=Event.objects.select_related('category').prefetch_related("Participants")
     
         if type=='today_event':
-         events=base_quary.filter(date=date.today())
+         events=events.filter(date=date.today())
         elif type=='upcoming_event':
-         events=base_quary.filter(date__gte=date.today())
+         events=events.filter(date__gte=date.today())
         elif type=='past_event':
-         events=base_quary.filter(date__lt=date.today())
+         events=events.filter(date__lt=date.today())
         elif type=='all':
-         events=base_quary.all()
+         events=events.all()
         
         category_id=self.request.GET.get("category")
         if category_id:
-          events=base_quary.filter(category_id=category_id)
+            events=events.filter(category_id=category_id)
     
         search_item=self.request.GET.get("search")
     
         if search_item:
-         events=Event.objects.filter(Q(name__icontains=search_item)|Q(location__icontains=search_item))
+            events=events.filter(Q(name__icontains=search_item)|Q(location__icontains=search_item))
          
-        return events
-         
-        
+        return events   
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -104,9 +103,11 @@ class MainDashboard(ListView):
         upcoming_event=Count('id',filter=Q(date__gte=date.today())),
         past_event=Count('id',filter=Q(date__lt=date.today()))
         )
-        context["counts"]=counts
+        context["count"]=counts
         context["all_category"] = Category.objects.all()
         context["participant"] = Event.objects.aggregate(total=Count('Participants', distinct=True))['total']
+        
+        return context
 
     
 
