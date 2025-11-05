@@ -163,8 +163,8 @@ class ChangePassword(PasswordChangeView):
     form_class=CustomPasswordChange
     
     
-class PasswordResetview(PasswordResetView):
-    from_class=CustomPasswordResetForm
+class PasswordResetView(PasswordResetView):
+    form_class=CustomPasswordResetForm
     template_name='registration/reset_password.html'
     success_url=reverse_lazy('sing_in')
     html_email_template_name='registration/reset_email.html'
@@ -182,7 +182,7 @@ class PasswordResetview(PasswordResetView):
  
     
 class PasswordResetConfirmView(PasswordResetConfirmView):
-    from_class=CustomPasswordResetConformForm
+    form_class=CustomPasswordResetConformForm
     template_name='registration/reset_password.html'
     success_url=reverse_lazy('sing_in')
     

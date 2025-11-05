@@ -100,6 +100,8 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Frontend URL
 FRONTEND_URL = "https://event-managment-bi6y.onrender.com"
+# local
+#FRONTEND_URL = "http://127.0.0.1:8000/"
 
 # Email config
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
